@@ -5,6 +5,8 @@ from .apps import AZIranianBankGatewaysConfig
 from .views import (
     callback_view,
     go_to_bank_gateway,
+    mock_bank_gateway_view,
+    mock_outcome_view,
     sample_payment_view,
     sample_result_view,
 )
@@ -25,6 +27,11 @@ if settings.IS_SAMPLE_FORM_ENABLE:
         path("sample-payment/", sample_payment_view, name="sample-payment"),
         path("sample-result/", sample_result_view, name="sample-result"),
     ]
+
+_urlpatterns += [
+    path("mock-outcome/", mock_outcome_view, name="mock-outcome"),
+    path("mock-bank-gateway/", mock_bank_gateway_view, name="mock-bank-gateway"),
+]
 
 
 def az_bank_gateways_urls():

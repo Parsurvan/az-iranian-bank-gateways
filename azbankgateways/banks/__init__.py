@@ -13,6 +13,7 @@ from .asanpardakht import AsanPardakht
 from .bahamta import Bahamta
 from .bmi import BMI
 from .mellat import Mellat
+from .mock import MockBank
 from .sep import SEP
 from .zarinpal import Zarinpal
 from .zibal import Zibal
@@ -25,6 +26,7 @@ __all__ = [
     "Bahamta",
     "BMI",
     "Mellat",
+    "MockBank",
     "SEP",
     "Zarinpal",
     "Zibal",

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment Receipt — SADERAT → REFAH</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .card {
+      background: #1e293b;
+      border-radius: 1.25rem;
+      max-width: 560px;
+      width: 100%;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0,0,0,.55);
+    }
+
+    /* Mock stripe bar */
+    .mock-stripe {
+      height: .45rem;
+      background: repeating-linear-gradient(
+        -45deg,
+        #d97706, #d97706 4px,
+        transparent 4px, transparent 12px
+      );
+    }
+
+    /* Banner */
+    .banner {
+      padding: 2.5rem 2rem 2rem;
+      text-align: center;
+      background: linear-gradient(135deg, #065f46, #047857);
+    }
+    .icon {
+      width: 76px; height: 76px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      margin-bottom: 1rem;
+      background: rgba(255,255,255,.18);
+    }
+    .banner h1 { font-size: 1.55rem; font-weight: 700; letter-spacing: -.02em; }
+    .banner p  { margin-top: .4rem; font-size: .875rem; opacity: .8; }
+    .badge {
+      display: inline-block;
+      padding: .28rem .85rem;
+      border-radius: 9999px;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-top: .75rem;
+      background: rgba(16,185,129,.25);
+      color: #6ee7b7;
+      border: 1px solid #10b981;
+    }
+
+    /* Mock warning */
+    .mock-banner {
+      background: repeating-linear-gradient(
+        -45deg,
+        rgba(245,158,11,.07), rgba(245,158,11,.07) 10px,
+        transparent 10px, transparent 20px
+      );
+      border: 1px dashed #d97706;
+      border-radius: .5rem;
+      padding: .5rem 1rem;
+      margin: 1.2rem 1.75rem .2rem;
+      font-size: .75rem;
+      color: #fcd34d;
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+    }
+
+    /* Amount hero */
+    .amount-hero {
+      margin: 1.4rem 1.75rem .5rem;
+      background: #0f172a;
+      border-radius: .85rem;
+      padding: 1.2rem 1.5rem;
+      text-align: center;
+    }
+    .amount-hero .label { font-size: .72rem; font-weight: 700; text-transform: uppercase;
+                          letter-spacing: .08em; color: #475569; margin-bottom: .35rem; }
+    .amount-hero .num   { font-size: 2.1rem; font-weight: 800; color: #f1f5f9; letter-spacing: -.03em; }
+    .amount-hero .unit  { font-size: .8rem; color: #64748b; margin-top: .2rem; }
+
+    /* Transfer direction */
+    .transfer {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      margin: 0 1.75rem 1rem;
+    }
+    .party {
+      flex: 1;
+      background: #0f172a;
+      border-radius: .75rem;
+      padding: .9rem 1rem;
+    }
+    .party .role {
+      font-size: .68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; color: #475569; margin-bottom: .35rem;
+    }
+    .party .name-en { font-size: .82rem; font-weight: 600; color: #e2e8f0; }
+    .party .name-fa {
+      font-size: .8rem; color: #94a3b8; margin-top: .15rem;
+      direction: rtl; font-family: Tahoma, sans-serif;
+    }
+    .party .bank-tag {
+      display: inline-block;
+      margin-top: .4rem;
+      padding: .18rem .55rem;
+      border-radius: .35rem;
+      background: #1e293b;
+      font-size: .7rem;
+      font-weight: 600;
+      color: #a5b4fc;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .party .sheba {
+      font-family: 'Courier New', monospace;
+      font-size: .68rem;
+      color: #475569;
+      margin-top: .3rem;
+      word-break: break-all;
+    }
+    .arrow {
+      font-size: 1.4rem;
+      color: #10b981;
+      flex-shrink: 0;
+    }
+
+    /* Detail rows */
+    .body { padding: .5rem 1.75rem 1rem; }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: .58rem 0;
+      border-bottom: 1px solid #334155;
+      gap: 1rem;
+    }
+    .row:last-child { border-bottom: none; }
+    .label-sm {
+      font-size: .72rem; font-weight: 600; color: #475569;
+      text-transform: uppercase; letter-spacing: .06em;
+      white-space: nowrap; padding-top: .05rem;
+    }
+    .value-sm {
+      font-size: .85rem; font-weight: 500; color: #cbd5e1; text-align: right;
+    }
+    .mono { font-family: 'Courier New', Courier, monospace; font-size: .78rem; color: #a5b4fc; }
+
+    /* Timeline */
+    .timeline-section { padding: 0 1.75rem 1.5rem; }
+    .tl-title {
+      font-size: .72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: #475569; margin-bottom: .9rem;
+    }
+    .timeline { position: relative; padding-left: 1.5rem; }
+    .timeline::before {
+      content: ''; position: absolute; left: .43rem; top: .3rem; bottom: .3rem;
+      width: 2px; background: #334155;
+    }
+    .tl-item { position: relative; padding-bottom: .9rem; font-size: .8rem; }
+    .tl-item:last-child { padding-bottom: 0; }
+    .tl-dot {
+      position: absolute; left: -1.5rem; top: .2rem;
+      width: .88rem; height: .88rem; border-radius: 50%;
+      border: 2px solid #334155; background: #1e293b;
+    }
+    .tl-dot.done { background: #10b981; border-color: #10b981; }
+    .tl-label { font-weight: 600; color: #e2e8f0; }
+    .tl-sub   { color: #475569; font-size: .73rem; margin-top: .1rem; }
+
+    /* Actions */
+    .actions {
+      padding: 0 1.75rem 1.75rem;
+      display: flex; gap: .75rem; flex-wrap: wrap;
+    }
+    .btn {
+      flex: 1; min-width: 120px; padding: .65rem 1rem;
+      border-radius: .6rem; border: none; cursor: pointer;
+      font-size: .85rem; font-weight: 600; text-decoration: none;
+      text-align: center; display: inline-block; transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-primary { background: #10b981; color: #fff; }
+    .btn-ghost   { background: #334155; color: #cbd5e1; }
+
+    /* Print hint */
+    .print-hint {
+      text-align: center; font-size: .7rem; color: #334155;
+      padding-bottom: 1.25rem; letter-spacing: .04em;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- Mock stripe -->
+  <div class="mock-stripe"></div>
+
+  <!-- Success banner -->
+  <div class="banner">
+    <div class="icon">✓</div>
+    <h1>Transfer Confirmed</h1>
+    <p>The inter-bank wire transfer has been completed successfully.</p>
+    <span class="badge">Payment Complete</span>
+  </div>
+
+  <!-- Mock watermark -->
+  <div class="mock-banner">
+    <span>⚠</span>
+    <span><strong>MOCK / SANDBOX</strong> — Test data from ~/test.txt. No real funds were moved.</span>
+  </div>
+
+  <!-- Amount hero -->
+  <div class="amount-hero">
+    <div class="label">Transfer Amount</div>
+    <div class="num">50,000,000,000</div>
+    <div class="unit">Iranian Rial (IRR) &nbsp;·&nbsp; 5,000,000,000 Toman</div>
+  </div>
+
+  <!-- Sender → Receiver -->
+  <div class="transfer">
+    <div class="party">
+      <div class="role">Sender</div>
+      <div class="name-en">Alireza Golpaiganie</div>
+      <div class="name-fa">علیرضا گلبایگانی</div>
+      <span class="bank-tag">SADERAT BANK</span>
+      <div class="sheba">IR05 0190 0000 0002 1340 6429 00</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="party">
+      <div class="role">Receiver</div>
+      <div class="name-en">Mohammad Ali Dehghan Shorbaskhlo</div>
+      <div class="name-fa">محمدعلی دهقان شورباخلو</div>
+      <span class="bank-tag">REFAH BANK</span>
+      <div class="sheba">IR22 0130 1000 0000 0078 7078 70</div>
+    </div>
+  </div>
+
+  <!-- Detail rows -->
+  <div class="body">
+
+    <div class="row">
+      <span class="label-sm">Status</span>
+      <span class="value-sm" style="color:#6ee7b7;font-weight:700">COMPLETE</span>
+    </div>
+
+    <div class="row">
+      <span class="label-sm">Bank (Sender)</span>
+      <span class="value-sm">
+        <span style="display:inline-block;padding:.18rem .55rem;border-radius:.35rem;
+                     background:#334155;font-size:.75rem;font-weight:600;letter-spacing:.04em">
+          SADERAT
+        </span>
+      </span>
+    </div>
+
+    <div class="row">
+      <span class="label-sm">Receiver Bank</span>
+      <span class="value-sm">
+        <span style="display:inline-block;padding:.18rem .55rem;border-radius:.35rem;
+                     background:#334155;font-size:.75rem;font-weight:600;letter-spacing:.04em">
+          REFAH
+        </span>
+      </span>
+    </div>
+
+    <div class="row">
+      <span class="label-sm">Tracking Code</span>
+      <span class="value-sm mono">IR220130100000000078707870</span>
+    </div>
+
+    <div class="row">
+      <span class="label-sm">Reference No.</span>
+      <span class="value-sm mono">IR050190000000021340642900</span>
+    </div>
+
+    <div class="row">
+      <span class="label-sm">Bank Response</span>
+      <span class="value-sm" style="color:#94a3b8;font-size:.8rem">Transfer confirmed by bank</span>
+    </div>
+
+    <div class="row">
+      <span class="label-sm">Initiated</span>
+      <span class="value-sm" style="font-size:.8rem">2026-05-12 13:15:15</span>
+    </div>
+
+    <div class="row">
+      <span class="label-sm">Identifier</span>
+      <span class="value-sm mono" style="color:#64748b">saderat-1</span>
+    </div>
+
+  </div>
+
+  <!-- Lifecycle timeline -->
+  <div class="timeline-section">
+    <div class="tl-title">Payment Lifecycle</div>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot done"></div>
+        <div class="tl-label">Gateway Token Created</div>
+        <div class="tl-sub">Bank record initialised, tracking code assigned</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot done"></div>
+        <div class="tl-label">Redirected to Bank</div>
+        <div class="tl-sub">User forwarded to SADERAT gateway</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot done"></div>
+        <div class="tl-label">Returned from Bank</div>
+        <div class="tl-sub">Callback received, verification started</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot done"></div>
+        <div class="tl-label">Verified &amp; Complete</div>
+        <div class="tl-sub">Transaction confirmed — 50,000,000,000 IRR transferred to REFAH</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Extra / raw info -->
+  <div style="padding:0 1.75rem 1.5rem">
+    <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;
+                letter-spacing:.08em;color:#475569;margin-bottom:.6rem">
+      Raw Transfer Data
+    </div>
+    <div style="background:#0f172a;border-radius:.75rem;padding:1rem;
+                font-family:'Courier New',Courier,monospace;font-size:.78rem;
+                color:#64748b;white-space:pre-wrap;line-height:1.7">{
+  "sender":        "Alireza Golpaiganie",
+  "sender_fa":     "علیرضا گلبایگانی",
+  "sender_sheba":  "IR050190000000021340642900",
+  "sender_bank":   "SADERAT BANK",
+  "receiver":      "Mohammad Ali Dehghan Shorbaskhlo",
+  "receiver_fa":   "محمدعلی دهقان شورباخلو",
+  "receiver_sheba":"IR220130100000000078707870",
+  "receiver_bank": "REFAH BANK",
+  "amount_rial":   50000000000,
+  "amount_toman":  5000000000,
+  "source":        "~/test.txt"
+}</div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <a href="/" class="btn btn-primary">✓ Done</a>
+    <a href="javascript:window.print()" class="btn btn-ghost">🖨 Print Receipt</a>
+  </div>
+
+  <div class="print-hint">Generated with az-iranian-bank-gateways mock engine · SANDBOX</div>
+
+</div>
+
+</body>
+</html>

@@ -11,6 +11,7 @@ class BankType(models.TextChoices):
     MELLAT = "MELLAT", _("Mellat")
     IRANDARGAH = "IRANDARGAH", _("IranDargah")
     ASANPARDAKHT = "ASANPARDAKHT", _("AsanPardakht")
+    MOCK = "MOCK", _("Mock (sandbox)")
 
 
 class CurrencyEnum(models.TextChoices):

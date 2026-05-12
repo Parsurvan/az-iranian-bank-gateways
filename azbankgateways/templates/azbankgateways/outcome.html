@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment Outcome</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .card {
+      background: #1e293b;
+      border-radius: 1.25rem;
+      max-width: 540px;
+      width: 100%;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0,0,0,.5);
+    }
+
+    /* ── Status banner ── */
+    .banner {
+      padding: 2.5rem 2rem 2rem;
+      text-align: center;
+      position: relative;
+    }
+    .banner.success { background: linear-gradient(135deg,#065f46,#047857); }
+    .banner.failed  { background: linear-gradient(135deg,#7f1d1d,#b91c1c); }
+    .banner.pending { background: linear-gradient(135deg,#1e3a5f,#1d4ed8); }
+    .banner.expired { background: linear-gradient(135deg,#374151,#4b5563); }
+    .banner.cancelled { background: linear-gradient(135deg,#78350f,#d97706); }
+
+    .icon {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      background: rgba(255,255,255,.15);
+    }
+
+    .banner h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -.02em; }
+    .banner p  { margin-top: .375rem; font-size: .875rem; opacity: .8; }
+
+    /* ── Pill badge ── */
+    .badge {
+      display: inline-block;
+      padding: .25rem .75rem;
+      border-radius: 9999px;
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      margin-top: .75rem;
+    }
+    .badge-success  { background: rgba(16,185,129,.25); color: #6ee7b7; border: 1px solid #10b981; }
+    .badge-failed   { background: rgba(239,68,68,.25);  color: #fca5a5; border: 1px solid #ef4444; }
+    .badge-pending  { background: rgba(59,130,246,.25); color: #93c5fd; border: 1px solid #3b82f6; }
+    .badge-expired  { background: rgba(156,163,175,.25);color: #d1d5db; border: 1px solid #9ca3af; }
+    .badge-cancelled{ background: rgba(245,158,11,.25); color: #fcd34d; border: 1px solid #f59e0b; }
+
+    /* ── Body ── */
+    .body { padding: 1.75rem 2rem; }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: .6rem 0;
+      border-bottom: 1px solid #334155;
+      gap: 1rem;
+    }
+    .row:last-child { border-bottom: none; }
+
+    .label {
+      font-size: .78rem;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      white-space: nowrap;
+      padding-top: .05rem;
+    }
+
+    .value {
+      font-size: .9rem;
+      font-weight: 500;
+      color: #cbd5e1;
+      text-align: right;
+      word-break: break-all;
+    }
+    .value.mono {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: .82rem;
+      color: #a5b4fc;
+    }
+    .value.amount {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+
+    /* ── Bank type chip ── */
+    .bank-chip {
+      display: inline-block;
+      padding: .2rem .6rem;
+      border-radius: .4rem;
+      background: #334155;
+      font-size: .78rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      letter-spacing: .04em;
+    }
+
+    /* ── Timeline ── */
+    .timeline-section {
+      padding: 0 2rem 1.75rem;
+    }
+    .timeline-title {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #475569;
+      margin-bottom: 1rem;
+    }
+    .timeline { position: relative; padding-left: 1.5rem; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: .45rem;
+      top: .35rem;
+      bottom: .35rem;
+      width: 2px;
+      background: #334155;
+    }
+    .tl-item {
+      position: relative;
+      padding-bottom: 1rem;
+      font-size: .82rem;
+    }
+    .tl-item:last-child { padding-bottom: 0; }
+    .tl-dot {
+      position: absolute;
+      left: -1.5rem;
+      top: .2rem;
+      width: .9rem;
+      height: .9rem;
+      border-radius: 50%;
+      border: 2px solid #334155;
+      background: #1e293b;
+    }
+    .tl-dot.active  { background: #10b981; border-color: #10b981; }
+    .tl-dot.current { background: #3b82f6; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.3); }
+    .tl-dot.failed  { background: #ef4444; border-color: #ef4444; }
+
+    .tl-label { font-weight: 600; color: #94a3b8; }
+    .tl-label.active   { color: #e2e8f0; }
+    .tl-sub   { color: #475569; font-size: .75rem; margin-top: .1rem; }
+
+    /* ── Extra info ── */
+    .extra-section {
+      padding: 0 2rem 1.75rem;
+    }
+    .extra-box {
+      background: #0f172a;
+      border-radius: .75rem;
+      padding: 1rem;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: .78rem;
+      color: #64748b;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.6;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+    .extra-title {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #475569;
+      margin-bottom: .6rem;
+    }
+
+    /* ── Actions ── */
+    .actions {
+      padding: 0 2rem 2rem;
+      display: flex;
+      gap: .75rem;
+      flex-wrap: wrap;
+    }
+    .btn {
+      flex: 1;
+      min-width: 120px;
+      padding: .65rem 1rem;
+      border-radius: .6rem;
+      border: none;
+      cursor: pointer;
+      font-size: .85rem;
+      font-weight: 600;
+      text-decoration: none;
+      text-align: center;
+      display: inline-block;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-primary { background: #3b82f6; color: #fff; }
+    .btn-ghost   { background: #334155; color: #cbd5e1; }
+
+    /* ── Mock watermark ── */
+    .mock-banner {
+      background: repeating-linear-gradient(
+        -45deg,
+        rgba(245,158,11,.07),
+        rgba(245,158,11,.07) 10px,
+        transparent 10px,
+        transparent 20px
+      );
+      border: 1px dashed #d97706;
+      border-radius: .5rem;
+      padding: .5rem 1rem;
+      margin: 0 2rem 1.25rem;
+      font-size: .75rem;
+      color: #fcd34d;
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+    }
+  </style>
+</head>
+<body>
+
+{# ------------------------------------------------------------------ #}
+{# Context variables expected:                                          #}
+{#   bank_record  – azbankgateways.models.Bank instance (or mock dict) #}
+{#   is_mock      – boolean, show mock watermark when True              #}
+{# ------------------------------------------------------------------ #}
+
+{% with status=bank_record.status %}
+
+<div class="card">
+
+  {# ── Mock watermark ── #}
+  {% if is_mock %}
+  <div style="height:.5rem;background:repeating-linear-gradient(-45deg,#d97706,#d97706 4px,transparent 4px,transparent 12px)"></div>
+  {% endif %}
+
+  {# ── Banner ── #}
+  <div class="banner {% if status == "COMPLETE" %}success{% elif status == "CANCEL_BY_USER" %}cancelled{% elif status == "EXPIRE_GATEWAY_TOKEN" or status == "EXPIRE_VERIFY_PAYMENT" %}expired{% elif status == "RETURN_FROM_BANK" or status == "REDIRECT_TO_BANK" %}pending{% else %}pending{% endif %}">
+    <div class="icon">{% if status == "COMPLETE" %}✓{% elif status == "CANCEL_BY_USER" %}✕{% elif status == "EXPIRE_GATEWAY_TOKEN" or status == "EXPIRE_VERIFY_PAYMENT" %}⏱{% elif status == "RETURN_FROM_BANK" or status == "REDIRECT_TO_BANK" %}↻{% else %}…{% endif %}</div>
+    <h1>
+      {% if status == "COMPLETE" %}Payment Successful{% endif %}
+      {% if status == "CANCEL_BY_USER" %}Payment Cancelled{% endif %}
+      {% if status == "EXPIRE_GATEWAY_TOKEN" %}Gateway Token Expired{% endif %}
+      {% if status == "EXPIRE_VERIFY_PAYMENT" %}Verification Expired{% endif %}
+      {% if status == "RETURN_FROM_BANK" %}Verifying Payment{% endif %}
+      {% if status == "REDIRECT_TO_BANK" %}Redirecting to Bank{% endif %}
+      {% if status == "WAITING" %}Awaiting Payment{% endif %}
+      {% if status == "ERROR" %}Payment Error{% endif %}
+    </h1>
+    <p>
+      {% if status == "COMPLETE" %}Your transaction has been confirmed.{% endif %}
+      {% if status == "CANCEL_BY_USER" %}The payment was cancelled before completion.{% endif %}
+      {% if status == "EXPIRE_GATEWAY_TOKEN" or status == "EXPIRE_VERIFY_PAYMENT" %}The session timed out. Please try again.{% endif %}
+      {% if status == "RETURN_FROM_BANK" %}Confirming with bank — please wait.{% endif %}
+      {% if status == "REDIRECT_TO_BANK" %}You are being forwarded to the bank gateway.{% endif %}
+      {% if status == "WAITING" %}Waiting for the bank gateway to respond.{% endif %}
+      {% if status == "ERROR" %}An unexpected error occurred. Please contact support.{% endif %}
+    </p>
+    <span class="badge {% if status == "COMPLETE" %}badge-success{% elif status == "CANCEL_BY_USER" %}badge-cancelled{% elif status == "EXPIRE_GATEWAY_TOKEN" or status == "EXPIRE_VERIFY_PAYMENT" %}badge-expired{% else %}badge-pending{% endif %}">{% if status == "COMPLETE" %}Payment Complete{% elif status == "CANCEL_BY_USER" %}Cancelled{% elif status == "EXPIRE_GATEWAY_TOKEN" or status == "EXPIRE_VERIFY_PAYMENT" %}Expired{% elif status == "RETURN_FROM_BANK" or status == "REDIRECT_TO_BANK" %}In Progress{% else %}Waiting{% endif %}</span>
+  </div>
+
+  {# ── Mock label ── #}
+  {% if is_mock %}
+  <div class="mock-banner">
+    <span>⚠</span>
+    <span><strong>MOCK / SANDBOX</strong> — This outcome was generated with test data. No real transaction occurred.</span>
+  </div>
+  {% endif %}
+
+  {# ── Transaction details ── #}
+  <div class="body">
+
+    <div class="row">
+      <span class="label">Bank</span>
+      <span class="value"><span class="bank-chip">{{ bank_record.bank_type }}</span></span>
+    </div>
+
+    <div class="row">
+      <span class="label">Amount</span>
+      <span class="value amount">
+        {% if bank_record.amount %}
+          {{ bank_record.amount|stringformat:"s" }} IRR
+        {% else %}
+          —
+        {% endif %}
+      </span>
+    </div>
+
+    <div class="row">
+      <span class="label">Tracking Code</span>
+      <span class="value mono">{{ bank_record.tracking_code|default:"—" }}</span>
+    </div>
+
+    <div class="row">
+      <span class="label">Reference No.</span>
+      <span class="value mono">{{ bank_record.reference_number|default:"—" }}</span>
+    </div>
+
+    <div class="row">
+      <span class="label">Bank Response</span>
+      <span class="value" style="color:#94a3b8;font-size:.82rem">{{ bank_record.response_result|default:"—"|truncatechars:80 }}</span>
+    </div>
+
+    <div class="row">
+      <span class="label">Initiated</span>
+      <span class="value" style="font-size:.82rem">{{ bank_record.created_at|date:"Y-m-d H:i:s" }}</span>
+    </div>
+
+    <div class="row">
+      <span class="label">Identifier</span>
+      <span class="value mono" style="color:#64748b">{{ bank_record.bank_choose_identifier|default:"1" }}</span>
+    </div>
+
+  </div>
+
+  {# ── Payment lifecycle timeline ── #}
+  <div class="timeline-section">
+    <div class="timeline-title">Payment Lifecycle</div>
+    <div class="timeline">
+
+      {# WAITING #}
+      <div class="tl-item">
+        <div class="tl-dot {% if status != 'WAITING' %}active{% elif status == 'WAITING' %}current{% endif %}"></div>
+        <div class="tl-label {% if status != 'WAITING' %}active{% endif %}">Gateway Token Created</div>
+        <div class="tl-sub">Bank record initialised, tracking code assigned</div>
+      </div>
+
+      {# REDIRECT_TO_BANK #}
+      <div class="tl-item">
+        {% if status == "WAITING" %}
+          <div class="tl-dot"></div>
+          <div class="tl-label">Redirected to Bank</div>
+        {% else %}
+          <div class="tl-dot {% if status == 'REDIRECT_TO_BANK' %}current{% else %}active{% endif %}"></div>
+          <div class="tl-label active">Redirected to Bank</div>
+        {% endif %}
+        <div class="tl-sub">User forwarded to {{ bank_record.bank_type }} gateway</div>
+      </div>
+
+      {# RETURN_FROM_BANK #}
+      <div class="tl-item">
+        {% if status in "WAITING,REDIRECT_TO_BANK" %}
+          <div class="tl-dot"></div>
+          <div class="tl-label">Returned from Bank</div>
+        {% else %}
+          <div class="tl-dot {% if status == 'RETURN_FROM_BANK' %}current{% else %}active{% endif %}"></div>
+          <div class="tl-label active">Returned from Bank</div>
+        {% endif %}
+        <div class="tl-sub">Callback received, starting verification</div>
+      </div>
+
+      {# Terminal state #}
+      <div class="tl-item">
+        {% if status == "COMPLETE" %}
+          <div class="tl-dot active"></div>
+          <div class="tl-label active">Verified &amp; Complete</div>
+          <div class="tl-sub">Transaction confirmed by bank</div>
+        {% elif status == "CANCEL_BY_USER" %}
+          <div class="tl-dot failed"></div>
+          <div class="tl-label active" style="color:#fca5a5">Cancelled by User</div>
+          <div class="tl-sub">Payment was not completed</div>
+        {% elif status == "EXPIRE_GATEWAY_TOKEN" or status == "EXPIRE_VERIFY_PAYMENT" %}
+          <div class="tl-dot failed"></div>
+          <div class="tl-label active" style="color:#d1d5db">Expired</div>
+          <div class="tl-sub">Session exceeded the allowed time window</div>
+        {% elif status == "ERROR" %}
+          <div class="tl-dot failed"></div>
+          <div class="tl-label active" style="color:#fca5a5">Error</div>
+          <div class="tl-sub">An unexpected error occurred during verification</div>
+        {% else %}
+          <div class="tl-dot current"></div>
+          <div class="tl-label">Pending Resolution</div>
+          <div class="tl-sub">Waiting for final verification result</div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+
+  {# ── Extra information (raw / mock JSON) ── #}
+  {% if bank_record.extra_information %}
+  <div class="extra-section">
+    <div class="extra-title">Extra Information (Raw Bank Data)</div>
+    <div class="extra-box">{{ bank_record.extra_information }}</div>
+  </div>
+  {% endif %}
+
+  {# ── Actions ── #}
+  <div class="actions">
+    {% if bank_record.callback_url %}
+      <a href="{{ bank_record.callback_url }}" class="btn btn-primary">
+        {% if status == "COMPLETE" %}Continue{% else %}Return to App{% endif %}
+      </a>
+    {% endif %}
+    <a href="/" class="btn btn-ghost">Home</a>
+  </div>
+
+</div>
+
+{% endwith %}
+
+</body>
+</html>
