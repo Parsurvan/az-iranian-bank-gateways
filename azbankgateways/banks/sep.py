@@ -20,27 +20,36 @@ class SEP(BaseBank):
                 "SECURE_REFERRER_POLICY is not set to 'strict-origin-when-cross-origin' in django setting,"
                 " it's mandatory for Saman gateway"
             )
-
         self.set_gateway_currency(CurrencyEnum.IRR)
-        self._token_api_url = "https://sep.shaparak.ir/onlinepg/onlinepg"
-        self._payment_url = "https://sep.shaparak.ir/OnlinePG/OnlinePG"
-        self._verify_api_url = "https://sep.shaparak.ir/verifyTxnRandomSessionkey/ipg/VerifyTransaction"
-
-    def get_bank_type(self):
-        return BankType.SEP
+        # URLs are set in set_default_settings (which runs inside super().__init__)
+        # so they are already available here. No need to re-assign defaults.
 
     def set_default_settings(self):
         for item in ["MERCHANT_CODE", "TERMINAL_CODE"]:
             if item not in self.default_setting_kwargs:
                 raise SettingDoesNotExist()
             setattr(self, f"_{item.lower()}", self.default_setting_kwargs[item])
+        # Optional URL overrides — useful for pointing at a local mock (e.g. irbankmock)
+        self._token_api_url = self.default_setting_kwargs.get(
+            "TOKEN_API_URL", "https://sep.shaparak.ir/onlinepg/onlinepg"
+        )
+        self._payment_url = self.default_setting_kwargs.get(
+            "PAYMENT_URL", "https://sep.shaparak.ir/OnlinePG/OnlinePG"
+        )
+        self._verify_api_url = self.default_setting_kwargs.get(
+            "VERIFY_API_URL",
+            "https://sep.shaparak.ir/verifyTxnRandomSessionkey/ipg/VerifyTransaction",
+        )
+
+    def get_bank_type(self):
+        return BankType.SEP
 
     def get_pay_data(self):
         data = {
-            "action": "Token",
+            "action": "token",
             "Amount": self.get_gateway_amount(),
             "TerminalId": self._merchant_code,
-            "ResNum": self.get_tracking_code(),
+            "ResNum": str(self.get_tracking_code()),
             "RedirectURL": self._get_gateway_callback_url(),
             "CellNumber": self.get_mobile_number(),
         }

@@ -35,6 +35,9 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
 ]
 
+# Required by Saman (SEP) gateway
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
 ROOT_URLCONF = "testproject.urls"
 
 TEMPLATES = [
@@ -73,6 +76,15 @@ AZ_IRANIAN_BANK_GATEWAYS = {
             "RECEIVER_NAME":  "Mohammad Ali Dehghan Shorbaskhlo / محمدعلی دهقان شورباخلو",
             "RECEIVER_BANK":  "Refah Bank / بانک رفاه",
             "RECEIVER_SHEBA": "IR220130100000000078707870",
+        },
+        "SEP": {
+            # Terminal created in irbankmock: parsvicci-testshop (ID=2)
+            "MERCHANT_CODE": "2",
+            "TERMINAL_CODE": "2",
+            # Override real Saman URLs → point to irbankmock
+            "TOKEN_API_URL":  "http://localhost:13000/banks/saman/OnlinePG/OnlinePG",
+            "PAYMENT_URL":    "https://irbank.vicivm.online/banks/saman/OnlinePG/OnlinePG",
+            "VERIFY_API_URL": "http://localhost:13000/banks/saman/verifyTxnRandomSessionkey/ipg/VerifyTransaction",
         },
     },
     "DEFAULT": "MOCK",

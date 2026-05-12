@@ -34,6 +34,25 @@ def initiate_payment_view(request):
         return HttpResponse(f"<h2>Error: {e}</h2>", status=500)
 
 
+def initiate_sep_payment_view(request):
+    """Create a SEP (Saman) payment via irbankmock and redirect the user."""
+    amount = int(request.GET.get("amount", 50_000_000_000))
+
+    factory = bankfactories.BankFactory()
+    try:
+        bank = factory.create(bank_models.BankType.SEP)
+        bank.set_request(request)
+        bank.set_amount(amount)
+        bank.set_client_callback_url(
+            request.build_absolute_uri(reverse("payment-result"))
+        )
+        bank.ready()
+        return bank.redirect_gateway()
+    except AZBankGatewaysException as e:
+        logging.critical("SEP init error: %s", e)
+        return HttpResponse(f"<h2>Error: {e}</h2>", status=500)
+
+
 def payment_result_view(request):
     """Verify the payment and render the custom outcome template."""
     tc = request.GET.get(settings.TRACKING_CODE_QUERY_PARAM)
