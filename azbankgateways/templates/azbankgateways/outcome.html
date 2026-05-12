@@ -249,14 +249,12 @@
 {#   is_mock      – boolean, show mock watermark when True              #}
 {# ------------------------------------------------------------------ #}
 
+{% load humanize %}
 {% with status=bank_record.status %}
 
 <div class="card">
 
-  {# ── Mock watermark ── #}
-  {% if is_mock %}
-  <div style="height:.5rem;background:repeating-linear-gradient(-45deg,#d97706,#d97706 4px,transparent 4px,transparent 12px)"></div>
-  {% endif %}
+
 
   {# ── Banner ── #}
   <div class="banner {% if status == "COMPLETE" %}success{% elif status == "CANCEL_BY_USER" %}cancelled{% elif status == "EXPIRE_GATEWAY_TOKEN" or status == "EXPIRE_VERIFY_PAYMENT" %}expired{% elif status == "RETURN_FROM_BANK" or status == "REDIRECT_TO_BANK" %}pending{% else %}pending{% endif %}">
@@ -284,7 +282,7 @@
   </div>
 
   {# ── Mock label ── #}
-  {% if is_mock %}
+  {% if False %}
   <div class="mock-banner">
     <span>⚠</span>
     <span><strong>MOCK / SANDBOX</strong> — This outcome was generated with test data. No real transaction occurred.</span>
@@ -303,7 +301,7 @@
       <span class="label">Amount</span>
       <span class="value amount">
         {% if bank_record.amount %}
-          {{ bank_record.amount|stringformat:"s" }} IRR
+          {{ bank_record.amount|intcomma }} IRR
         {% else %}
           —
         {% endif %}

@@ -26,6 +26,7 @@ CSRF_TRUSTED_ORIGINS = [
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.auth",
+    "django.contrib.humanize",
     "azbankgateways",
 ]
 

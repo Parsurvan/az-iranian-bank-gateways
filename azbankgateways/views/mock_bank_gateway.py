@@ -28,7 +28,7 @@ _PAGE = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Mock Bank Gateway — Sandbox</title>
+<title>Bank Payment</title>
 <style>
   *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{
@@ -148,10 +148,6 @@ _PAGE = """<!DOCTYPE html>
 </head>
 <body>
 <div class="card">
-  <div class="badge">⚙ Sandbox — Mock Bank</div>
-  <h1>Payment Confirmation</h1>
-  <p class="subtitle">This is a simulated bank gateway. No real transaction will occur.</p>
-
   <div class="detail-grid">
     <span class="lbl">Tracking Code</span>
     <span class="val">{tc}</span>
@@ -183,8 +179,7 @@ _PAGE = """<!DOCTYPE html>
     <a class="btn btn-cancel"  href="{cancel_url}">✕ Cancel</a>
   </div>
 
-  <p class="footer">Mock Bank Sandbox &bull; az-iranian-bank-gateways &bull; For development only</p>
-</div>
+  </div>
 </body>
 </html>"""
 
